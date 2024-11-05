@@ -8,7 +8,7 @@ class VisualizePath():
         self.path = path
         self.path_coords = path_coords
 
-    # For BFS and DFS mainly
+    # For BFS  mainly
     def get_path_coords(self):
         i = self.start_node_x
         j = self.start_node_y

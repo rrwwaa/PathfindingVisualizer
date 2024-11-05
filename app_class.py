@@ -2,12 +2,8 @@ import sys
 from settings import *
 from buttons import *
 from bfs_class import *
-from dfs_class import *
 from astar_class import *
-from dijkstra_class import *
-from bidirectional_class import *
 from visualize_path_class import *
-from maze_class import *
 
 pygame.init()
 
@@ -24,31 +20,25 @@ class App:
         self.mouse_drag = 0
 
         # Start and End Nodes Coordinates
-        self.start_node_x = None
-        self.start_node_y = None
+        self.start_node_x = 0
+        self.start_node_y = 0
         self.end_node_x = None
         self.end_node_y = None
 
         # Wall Nodes List (list already includes the coordinates of the borders)
         self.wall_pos = wall_nodes_coords_list.copy()
 
-        # Maze Class Instantiation
-        self.maze = Maze(self, self.wall_pos)
 
         # Define Main-Menu buttons
-        self.bfs_button = Buttons(self, WHITE, 228, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'Breadth-First Search')
-        self.dfs_button = Buttons(self, WHITE, 448, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'Depth-First Search')
-        self.astar_button = Buttons(self, WHITE, 668, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'A-Star Search')
-        self.dijkstra_button = Buttons(self, WHITE, 888, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'Dijkstra Search')
-        self.bidirectional_button = Buttons(self, WHITE, 1108, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'Bidirectional Search')
-
+        self.bfs_button = Buttons(self, WHITE, 300, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, ' BFS')
+        self.astar_button = Buttons(self, WHITE, 1000, MAIN_BUTTON_Y_POS, MAIN_BUTTON_LENGTH, MAIN_BUTTON_HEIGHT, 'A* Search')
+        
         # Define Grid-Menu buttons
         self.start_end_node_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Start/End Node')
         self.wall_node_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT + GRID_BUTTON_HEIGHT + BUTTON_SPACER, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Wall Node')
         self.reset_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT + GRID_BUTTON_HEIGHT*2 + BUTTON_SPACER*2, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Reset')
         self.start_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT + GRID_BUTTON_HEIGHT*3 + BUTTON_SPACER*3, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Visualize Path')
         self.main_menu_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT + GRID_BUTTON_HEIGHT * 4 + BUTTON_SPACER * 4, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Main Menu')
-        self.maze_generate_button = Buttons(self, AQUAMARINE, 20, START_END_BUTTON_HEIGHT + GRID_BUTTON_HEIGHT * 5 + BUTTON_SPACER * 5, GRID_BUTTON_LENGTH, GRID_BUTTON_HEIGHT, 'Generate Maze')
     def run(self):
         while self.running:
             if self.state == 'main menu':
@@ -69,8 +59,8 @@ class App:
 
 ##### Loading Images
     def load(self):
-        self.main_menu_background = pygame.image.load('main_background.png')
-        self.grid_background = pygame.image.load('grid_logo.png')
+        self.main_menu_background = pygame.image.load('main_background.jpg')
+        self.grid_background = pygame.image.load('grid_logo.jpg')
 
 ##### Draw Text
     def draw_text(self, words, screen, pos, size, colour, font_name, centered=False):
@@ -88,10 +78,7 @@ class App:
 
         # Draw Buttons
         self.bfs_button.draw_button(AQUAMARINE)
-        self.dfs_button.draw_button(AQUAMARINE)
         self.astar_button.draw_button(AQUAMARINE)
-        self.dijkstra_button.draw_button(AQUAMARINE)
-        self.bidirectional_button.draw_button(AQUAMARINE)
 
 ##### Setup for Grid
     def sketch_hotbar(self):
@@ -121,7 +108,6 @@ class App:
         self.reset_button.draw_button(STEELBLUE)
         self.start_button.draw_button(STEELBLUE)
         self.main_menu_button.draw_button(STEELBLUE)
-        self.maze_generate_button.draw_button(STEELBLUE)
 
 ##### Function for the buttons on grid window. Became too repetitive so, I made it a function.
     # Checks for state when button is clicked and changes button colour when hovered over.
@@ -137,9 +123,7 @@ class App:
                 self.state = 'start visualizing'
             elif self.main_menu_button.isOver(pos):
                 self.back_to_menu()
-            elif self.maze_generate_button.isOver(pos):
                 self.state = 'draw walls'
-                self.maze.generateSolid()
                 self.state = 'draw S/E'
 
         # Get mouse position and check if it is hovering over button
@@ -152,14 +136,12 @@ class App:
                 self.reset_button.colour = MINT
             elif self.start_button.isOver(pos):
                 self.start_button.colour = MINT
-            elif self.main_menu_button.isOver(pos):
-                self.main_menu_button.colour = MINT
-            elif self.maze_generate_button.isOver(pos):
-                self.maze_generate_button.colour = MINT
+            
+            
             else:
                 self.start_end_node_button.colour, self.wall_node_button.colour, self.reset_button.colour, \
-                self.start_button.colour, self.main_menu_button.colour, self.maze_generate_button.colour = \
-                    STEELBLUE, STEELBLUE, STEELBLUE, STEELBLUE, STEELBLUE, STEELBLUE
+                self.start_button.colour, self.main_menu_button.colour = \
+                    STEELBLUE, STEELBLUE, STEELBLUE, STEELBLUE, STEELBLUE
 
     def grid_button_keep_colour(self):
         if self.state == 'draw S/E':
@@ -208,7 +190,6 @@ class App:
         # Draw Background
         pygame.display.update()
         self.sketch_main_menu()
-        self.draw_text('Made By: Seung Jae Yang', self.screen, [1200, 720], 28, WHITE, FONT, centered=False)
 
         # Check if game is running
         for event in pygame.event.get():
@@ -220,34 +201,23 @@ class App:
                 if self.bfs_button.isOver(pos):
                     self.algorithm_state = 'bfs'
                     self.state = 'grid window'
-                if self.dfs_button.isOver(pos):
-                    self.algorithm_state = 'dfs'
-                    self.state = 'grid window'
+                
                 if self.astar_button.isOver(pos):
                     self.algorithm_state = 'astar'
                     self.state = 'grid window'
-                if self.dijkstra_button.isOver(pos):
-                    self.algorithm_state = 'dijkstra'
-                    self.state = 'grid window'
-                if self.bidirectional_button.isOver(pos):
-                    self.algorithm_state = 'bidirectional'
-                    self.state = 'grid window'
+                
+                
 
             # Get mouse position and check if it is hovering over button
             if event.type == pygame.MOUSEMOTION:
                 if self.bfs_button.isOver(pos):
                     self.bfs_button.colour = AQUAMARINE
-                elif self.dfs_button.isOver(pos):
-                    self.dfs_button.colour = AQUAMARINE
+                
                 elif self.astar_button.isOver(pos):
                     self.astar_button.colour = AQUAMARINE
-                elif self.dijkstra_button.isOver(pos):
-                    self.dijkstra_button.colour = AQUAMARINE
-                elif self.bidirectional_button.isOver(pos):
-                    self.bidirectional_button.colour = AQUAMARINE
+               
                 else:
-                    self.bfs_button.colour, self.dfs_button.colour, self.astar_button.colour, self.dijkstra_button.colour, \
-                    self.bidirectional_button.colour = WHITE, WHITE, WHITE, WHITE, WHITE
+                    self.bfs_button.colour, self.astar_button.colour,  = WHITE, WHITE
 
 ##### PLAYING STATE FUNCTIONS #####
 
@@ -369,22 +339,7 @@ class App:
             else:
                 self.draw_text('NO ROUTE FOUND!', self.screen, [768,384], 50, RED, FONT, centered = True)
 
-        ### DFS ###
-
-        elif self.algorithm_state == 'dfs':
-            self.dfs = DepthFirst(self, self.start_node_x, self.start_node_y, self.end_node_x, self.end_node_y, self.wall_pos)
-
-            if self.start_node_x or self.end_node_x is not None:
-                self.dfs.dfs_execute()
-
-            # Make Object for new path
-            if self.dfs.route_found:
-                self.draw_path = VisualizePath(self.screen, self.start_node_x, self.start_node_y, self.dfs.route, [])
-                self.draw_path.get_path_coords()
-                self.draw_path.draw_path()
-
-            else:
-                self.draw_text('NO ROUTE FOUND!', self.screen, [768,384], 50, RED, FONT, centered = True)
+       
 
         ### A-STAR ###
 
@@ -401,44 +356,9 @@ class App:
             else:
                 self.draw_text('NO ROUTE FOUND!', self.screen, [768, 384], 50, RED, FONT, centered=True)
 
-        ### DIJKSTRA ###
+       
 
-        elif self.algorithm_state == 'dijkstra':
-            self.dijkstra = Dijkstra(self, self.start_node_x, self.start_node_y, self.end_node_x, self.end_node_y, self.wall_pos)
-
-            if self.start_node_x or self.end_node_x is not None:
-                self.dijkstra.dijkstra_execute()
-
-            if self.dijkstra.route_found:
-                self.draw_path = VisualizePath(self.screen, self.start_node_x, self.start_node_y, None, self.dijkstra.route)
-                self.draw_path.draw_path()
-
-            else:
-                self.draw_text('NO ROUTE FOUND!', self.screen, [768, 384], 50, RED, FONT, centered=True)
-
-        ### BIDRECTIONAL ###
-
-        elif self.algorithm_state == 'bidirectional':
-            self.bidirectional = Bidirectional(self, self.start_node_x, self.start_node_y, self.end_node_x, self.end_node_y, self.wall_pos)
-
-            if self.start_node_x or self.end_node_x is not None:
-                self.bidirectional.bidirectional_execute()
-
-            if self.bidirectional.route_found:
-                print(self.bidirectional.route_f)
-                print(self.bidirectional.route_r)
-                self.draw_path_f = VisualizePath(self.screen, self.start_node_x, self.start_node_y, None, self.bidirectional.route_f)
-                self.draw_path_r = VisualizePath(self.screen, self.end_node_x, self.end_node_y, None, self.bidirectional.route_r)
-
-                # Draw paths on the app
-                self.draw_path_f.draw_path()
-                self.draw_path_r.draw_path()
-
-            else:
-                self.draw_text('NO ROUTE FOUND!', self.screen, [768, 384], 50, RED, FONT, centered=True)
-
-        pygame.display.update()
-        self.state = 'aftermath'
+        
 
 #################################### AFTERMATH FUNCTIONS #########################################
 
